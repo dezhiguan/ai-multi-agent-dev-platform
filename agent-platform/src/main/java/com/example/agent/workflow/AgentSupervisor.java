@@ -1,7 +1,9 @@
 package com.example.agent.workflow;
 
 import com.example.agent.agents.BaseAgent;
+import com.example.agent.agents.RagAgent;
 import com.example.agent.state.AgentState;
+import com.example.agent.state.PrdAnalysis;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -15,6 +17,8 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class AgentSupervisor {
+
+    private final RagAgent ragAgent;
 
     // 自动注入所有实现了BaseAgent的Agent
     private final List<BaseAgent> agentList;
@@ -41,6 +45,11 @@ public class AgentSupervisor {
         WorkflowContext context = new WorkflowContext();
         AgentState agentState = new AgentState();
         agentState.setTaskId(taskId);
+
+        // 初始化 PrdAnalysis，防止空指针
+        PrdAnalysis prdAnalysis = new PrdAnalysis();
+        prdAnalysis.setQueryContent("订单管理系统需求"); // 给个默认值
+        agentState.setPrdAnalysis(prdAnalysis);
 
         context.setTaskId(taskId);
         context.setAgentState(agentState);
@@ -69,5 +78,9 @@ public class AgentSupervisor {
         System.out.println("=====================================");
 
         // 这里未来会匹配对应的Agent执行
+
+        if(step == WorkflowStep.RAG_RETRIEVE) {
+            ragAgent.execute(state);
+        }
     }
 }
