@@ -24,8 +24,8 @@ public class PrdAgent implements BaseAgent {
         try {
 
             //1.加载提示词
-            String prompt = PromptUtil.buildPrompt("prd-agent.txt", state.getPrdContent());
-
+            String prompt = PromptUtil.buildPrompt("prd-agent.txt",
+                    state.getPrdContent() == null ? "" : state.getPrdContent());
             //2.调用llm
             String json = llmClient.chat(prompt);
 

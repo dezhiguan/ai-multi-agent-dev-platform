@@ -1,9 +1,11 @@
 package com.example.agent.workflow;
 
+import com.example.agent.agents.BackendCodeAgent;
 import com.example.agent.agents.BaseAgent;
 import com.example.agent.agents.PrdAgent;
 import com.example.agent.agents.RagAgent;
 import com.example.agent.state.AgentState;
+import com.example.agent.state.CodeGenerationResult;
 import com.example.agent.state.PrdAnalysis;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,8 @@ public class AgentSupervisor {
     private final PrdAgent prdAgent;
 
     private final RagAgent ragAgent;
+
+    private final BackendCodeAgent backendCodeAgent;
 
     // 自动注入所有实现了BaseAgent的Agent
     private final List<BaseAgent> agentList;
@@ -49,10 +53,17 @@ public class AgentSupervisor {
         AgentState agentState = new AgentState();
         agentState.setTaskId(taskId);
 
-        // 初始化 PrdAnalysis，防止空指针
+        // ====================== 修复 1：给 PRD 内容默认值（必加）======================
+        agentState.setPrdContent("我需要开发一个订单管理系统，包含创建订单、订单列表、订单详情功能");
+
+        // ====================== 修复 2：初始化 PrdAnalysis（防空指针）======================
         PrdAnalysis prdAnalysis = new PrdAnalysis();
-        prdAnalysis.setQueryContent("订单管理系统需求"); // 给个默认值
+        prdAnalysis.setQueryContent("订单管理系统，包含创建、查询、列表功能");
         agentState.setPrdAnalysis(prdAnalysis);
+
+        // ====================== 修复 3：初始化后端结果对象（防空指针）======================
+        CodeGenerationResult backendResult = new CodeGenerationResult();
+        agentState.setBackendCodeResult(backendResult);
 
         context.setTaskId(taskId);
         context.setAgentState(agentState);
@@ -86,6 +97,10 @@ public class AgentSupervisor {
 
         if(step == WorkflowStep.RAG_RETRIEVE) {
             ragAgent.execute(state);
+        }
+
+        if(step == WorkflowStep.BACKEND_CODE_GENERATE) {
+            backendCodeAgent.execute(state);
         }
 
     }

@@ -1,6 +1,6 @@
-### 发送一个 GET 请求
+### 发送一个 POST 请求
 POST http://localhost:8080/prd/analyze?prdContent = 设计一个订单管理系统，包含创建订单、订单列表、订单详情功能
 
 
-
-
+### 发送一个 GET 请求
+GET http://localhost:8080/workflow/start/test-001

@@ -14,4 +14,14 @@ public class PromptUtil {
             return template.replace("{{prdContent}}", prdContent);
         }
     }
+
+    public static String buildPrompt(String templateName, String prdContent, String ragContext)
+            throws Exception {
+        // 从 classpath 读取文件（兼容开发 & 生产）
+        try (InputStream inputStream = new ClassPathResource("prompts/" + templateName).getInputStream()) {
+            String template = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+            return template.replace("{{prdContent}}", prdContent)
+                    .replace("{{ragContext}}", ragContext);
+        }
+    }
 }
