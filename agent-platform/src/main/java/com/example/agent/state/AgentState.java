@@ -35,6 +35,9 @@ public class AgentState {
     // 错误信息列表
     private List<String> errorList = new ArrayList<>();
 
+    // 上传的原始PRD内容
+    private String prdContent;
+
     // 快速添加错误
     public void addError(String error) {
         this.errorList.add(error);

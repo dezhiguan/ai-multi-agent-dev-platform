@@ -1,6 +1,7 @@
 package com.example.agent.workflow;
 
 import com.example.agent.agents.BaseAgent;
+import com.example.agent.agents.PrdAgent;
 import com.example.agent.agents.RagAgent;
 import com.example.agent.state.AgentState;
 import com.example.agent.state.PrdAnalysis;
@@ -17,6 +18,8 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class AgentSupervisor {
+
+    private final PrdAgent prdAgent;
 
     private final RagAgent ragAgent;
 
@@ -77,10 +80,13 @@ public class AgentSupervisor {
         System.out.println("正在执行步骤：" + step.getDesc());
         System.out.println("=====================================");
 
-        // 这里未来会匹配对应的Agent执行
+        if(step == WorkflowStep.PRD_ANALYSIS) {
+            prdAgent.execute(state);
+        }
 
         if(step == WorkflowStep.RAG_RETRIEVE) {
             ragAgent.execute(state);
         }
+
     }
 }
