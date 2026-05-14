@@ -1,9 +1,6 @@
 package com.example.agent.workflow;
 
-import com.example.agent.agents.BackendCodeAgent;
-import com.example.agent.agents.BaseAgent;
-import com.example.agent.agents.PrdAgent;
-import com.example.agent.agents.RagAgent;
+import com.example.agent.agents.*;
 import com.example.agent.state.AgentState;
 import com.example.agent.state.CodeGenerationResult;
 import com.example.agent.state.PrdAnalysis;
@@ -26,6 +23,8 @@ public class AgentSupervisor {
     private final RagAgent ragAgent;
 
     private final BackendCodeAgent backendCodeAgent;
+
+    private final FrontendCodeAgent frontendCodeAgent;
 
     // 自动注入所有实现了BaseAgent的Agent
     private final List<BaseAgent> agentList;
@@ -65,6 +64,9 @@ public class AgentSupervisor {
         CodeGenerationResult backendResult = new CodeGenerationResult();
         agentState.setBackendCodeResult(backendResult);
 
+        CodeGenerationResult frontendResult = new CodeGenerationResult();
+        agentState.setFrontendCodeResult(frontendResult);
+
         context.setTaskId(taskId);
         context.setAgentState(agentState);
 
@@ -101,6 +103,10 @@ public class AgentSupervisor {
 
         if(step == WorkflowStep.BACKEND_CODE_GENERATE) {
             backendCodeAgent.execute(state);
+        }
+
+        if(step == WorkflowStep.FRONTEND_CODE_GENERATE) {
+            frontendCodeAgent.execute(state);
         }
 
     }
