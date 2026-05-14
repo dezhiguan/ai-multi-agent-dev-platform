@@ -28,6 +28,8 @@ public class AgentSupervisor {
 
     private final CodeFixAgent codeFixAgent;
 
+    private final RuntimeAgent runtimeAgent;
+
     // 自动注入所有实现了BaseAgent的Agent
     private final List<BaseAgent> agentList;
 
@@ -54,37 +56,29 @@ public class AgentSupervisor {
         AgentState agentState = new AgentState();
         agentState.setTaskId(taskId);
 
-        // ====================== 修复 1：给 PRD 内容默认值（必加）======================
-        agentState.setPrdContent("我需要开发一个订单管理系统，包含创建订单、订单列表、订单详情功能");
-
-        // ====================== 修复 2：初始化 PrdAnalysis（防空指针）======================
+        // 初始化PRD
+        agentState.setPrdContent("开发订单管理系统，包含创建、列表、详情");
         PrdAnalysis prdAnalysis = new PrdAnalysis();
-        prdAnalysis.setQueryContent("订单管理系统，包含创建、查询、列表功能");
+        prdAnalysis.setQueryContent("订单管理系统 增删改查");
         agentState.setPrdAnalysis(prdAnalysis);
 
-        // ====================== 修复 3：初始化后端结果对象（防空指针）======================
-        CodeGenerationResult backendResult = new CodeGenerationResult();
-        agentState.setBackendCodeResult(backendResult);
+        // 初始化RAG
+        RagContext ragContext = new RagContext();
+        agentState.setRagContext(ragContext);
 
-        //前端代码生成结果初始化
-        CodeGenerationResult frontendResult = new CodeGenerationResult();
-        agentState.setFrontendCodeResult(frontendResult);
+        // 初始化前后端生成结果
+        agentState.setBackendCodeResult(new CodeGenerationResult());
+        agentState.setFrontendCodeResult(new CodeGenerationResult());
 
-        //测试结果初始化
-        TestExecutionResult testResult = new TestExecutionResult();
-        agentState.setTestResult(testResult);
-
-        //运行结果初始化
-        RuntimeResult runtimeResult = new RuntimeResult();
-        agentState.setRuntimeResult(runtimeResult);
+        // 初始化测试、运行结果
+        agentState.setTestResult(new TestExecutionResult());
+        agentState.setRuntimeResult(new RuntimeResult());
 
         context.setTaskId(taskId);
         context.setAgentState(agentState);
 
-        // 执行所有步骤
         for (WorkflowStep step : workflowSequence) {
             if (context.isHasError()) break;
-
             context.setCurrentStep(step);
             executeStep(context);
             context.getFinishedSteps().add(step);
@@ -127,6 +121,11 @@ public class AgentSupervisor {
         if(step == WorkflowStep.CODE_FIX) {
             codeFixAgent.execute(state);
         }
+
+        if (step == WorkflowStep.RUNTIME_START) {
+            runtimeAgent.execute(state);
+        }
+
 
     }
 }
