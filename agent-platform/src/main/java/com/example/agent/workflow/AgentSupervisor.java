@@ -59,7 +59,7 @@ public class AgentSupervisor {
         // 初始化PRD
         agentState.setPrdContent("开发订单管理系统，包含创建、列表、详情");
         PrdAnalysis prdAnalysis = new PrdAnalysis();
-        prdAnalysis.setQueryContent("订单管理系统 增删改查");
+        prdAnalysis.setQueryContent("订单管理系统，包含创建、查询、列表功能");
         agentState.setPrdAnalysis(prdAnalysis);
 
         // 初始化RAG

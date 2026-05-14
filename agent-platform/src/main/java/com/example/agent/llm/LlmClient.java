@@ -22,7 +22,12 @@ public class LlmClient {
     @Value("${llm.deepseek.model}")
     private String model;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
+
+    public LlmClient(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
+
 
     /**
      * 真实调用 DeepSeek 大模型

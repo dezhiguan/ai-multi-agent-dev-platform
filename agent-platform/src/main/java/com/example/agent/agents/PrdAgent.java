@@ -5,6 +5,7 @@ import com.example.agent.llm.LlmClient;
 import com.example.agent.state.AgentState;
 import com.example.agent.state.PrdAnalysis;
 import com.example.agent.tools.PromptUtil;
+import com.example.agent.util.JsonCleanUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -27,7 +28,8 @@ public class PrdAgent implements BaseAgent {
             String prompt = PromptUtil.buildPrompt("prd-agent.txt",
                     state.getPrdContent() == null ? "" : state.getPrdContent());
             //2.调用llm
-            String json = llmClient.chat(prompt);
+            String rawResp = llmClient.chat(prompt);
+            String json = JsonCleanUtil.cleanJson(rawResp);
 
             //3.解析结构化结果
             PrdAnalysis prdAnalysis = objectMapper.readValue(json, PrdAnalysis.class);
