@@ -2,8 +2,8 @@ package com.example.agent.rag;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import java.util.ArrayList;
-import java.util.List;
+
+import java.util.*;
 
 /**
  * 向量存储服务（占位实现，不依赖任何pgvector库，项目可正常启动）
@@ -13,20 +13,35 @@ import java.util.List;
 @RequiredArgsConstructor
 public class VectorStoreService {
 
-    // 暂存模拟数据
-    private final List<String> mockContents = new ArrayList<>();
+    private final Map<String, float[]> vectorMap = new HashMap();
+
+    private final Map<String, String> contentMap = new HashMap<>();
+
+    private final EmbeddingService embeddingService;
 
     // 模拟保存向量
     public void saveEmbedding(String taskId, String chunk, float[] embedding) {
-        System.out.println("模拟保存向量：" + chunk);
-        mockContents.add(chunk);
+        String key = UUID.randomUUID().toString();
+        vectorMap.put(key, embedding);
+        contentMap.put(key, chunk);
+        System.out.println("【RAG】已存入知识块：" + chunk.substring(0, Math.min(30, chunk.length())) + "...");
     }
 
     // 模拟检索
     public List<String> searchSimilar(float[] queryEmbedding, int topK) {
-        System.out.println("模拟向量检索，返回前" + topK + "条结果");
-        return mockContents.stream()
-                .limit(topK)
-                .toList();
+        List<Map.Entry<String, Float>> scoreList = new ArrayList<>();
+        for (String key : vectorMap.keySet()) {
+            float sim = embeddingService.similarity(queryEmbedding, vectorMap.get(key));
+            scoreList.add(new AbstractMap.SimpleEntry<>(key, sim));
+        }
+
+        scoreList.sort((a, b) -> b.getValue().compareTo(a.getValue()));
+
+        List<String> result = new ArrayList<>();
+        for (int i = 0; i < Math.min(topK, scoreList.size()); i++) {
+            String key = scoreList.get(i).getKey();
+            result.add(contentMap.get(key));
+        }
+        return result;
     }
 }

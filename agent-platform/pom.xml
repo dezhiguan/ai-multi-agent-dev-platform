@@ -90,6 +90,13 @@
             <artifactId>jackson-databind</artifactId>
         </dependency>
 
+        <!-- 中文分词 (用于生成简单向量) -->
+        <dependency>
+            <groupId>com.huaban</groupId>
+            <artifactId>jieba-analysis</artifactId>
+            <version>1.0.2</version>
+        </dependency>
+
     </dependencies>
 
     <build>

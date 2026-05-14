@@ -5,4 +5,6 @@ POST http://localhost:8080/prd/analyze?prdContent = 设计一个订单管理系�
 ### 发送一个 GET 请求
 GET http://localhost:8080/workflow/start/test-001
 
+### 发送一个 POST 请求
+POST http://localhost:8080/knowledge/upload?
 
