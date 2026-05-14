@@ -34,3 +34,10 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
     validate-on-migrate: false
+
+# DeepSeek 大模型配置
+llm:
+  deepseek:
+    api-key: sk-07dc2ffe548d40888bf6f39fdbf21248
+    api-url: https://api.deepseek.com/v1/chat/completions
+    model: deepseek-chat
