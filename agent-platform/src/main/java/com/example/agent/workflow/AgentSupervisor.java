@@ -4,6 +4,7 @@ import com.example.agent.agents.*;
 import com.example.agent.state.AgentState;
 import com.example.agent.state.CodeGenerationResult;
 import com.example.agent.state.PrdAnalysis;
+import com.example.agent.state.TestExecutionResult;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -25,6 +26,8 @@ public class AgentSupervisor {
     private final BackendCodeAgent backendCodeAgent;
 
     private final FrontendCodeAgent frontendCodeAgent;
+
+    private final TestAgent testAgent;
 
     // 自动注入所有实现了BaseAgent的Agent
     private final List<BaseAgent> agentList;
@@ -64,8 +67,13 @@ public class AgentSupervisor {
         CodeGenerationResult backendResult = new CodeGenerationResult();
         agentState.setBackendCodeResult(backendResult);
 
+        //前端代码生成结果初始化
         CodeGenerationResult frontendResult = new CodeGenerationResult();
         agentState.setFrontendCodeResult(frontendResult);
+
+        //测试结果初始化
+        TestExecutionResult testResult = new TestExecutionResult();
+        agentState.setTestResult(testResult);
 
         context.setTaskId(taskId);
         context.setAgentState(agentState);
@@ -107,6 +115,10 @@ public class AgentSupervisor {
 
         if(step == WorkflowStep.FRONTEND_CODE_GENERATE) {
             frontendCodeAgent.execute(state);
+        }
+
+        if(step == WorkflowStep.TEST_EXECUTE) {
+            testAgent.execute(state);
         }
 
     }

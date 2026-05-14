@@ -1,0 +1,11 @@
+你是资深测试开发工程师，根据下面的后端代码生成对应的 SpringBoot 单元测试。
+代码：{{backendCode}}
+
+要求：
+- 使用 JUnit 5 + Mockito
+- 测试 Controller 接口
+- 模拟 Service 层
+- 完整可运行
+- 符合标准单测规范
+
+只返回测试代码，不解释。
