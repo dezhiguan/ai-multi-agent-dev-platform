@@ -30,7 +30,7 @@ public class BackendCodeAgent implements BaseAgent {
             // 1. 构建提示词
             String prdInfo = objectMapper.writeValueAsString(state.getPrdAnalysis());
             String ragInfo = state.getRagContext() != null ? state.getRagContext().toString() : "无规范";
-            String prompt = PromptUtil.buildBackendPrompt(prdInfo, ragInfo);
+            String prompt = PromptUtil.backendPrompt(prdInfo, ragInfo);
 
             // 2. 调用大模型
             String raw = llmClient.chat(prompt);

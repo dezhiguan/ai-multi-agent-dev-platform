@@ -14,36 +14,31 @@ public class CodeFixAgent implements BaseAgent {
     private final LlmClient llmClient;
     private final FileTool fileTool;
 
-
     @Override
     public AgentState execute(AgentState state) {
-        System.out.println("=== CodeFixAgent 开始自动修复代码 ===");
+        System.out.println("=== CodeFixAgent 自动修复 ===");
 
-        // 模拟取错误日志，后面可接入真实mvn日志
-        String errorLog = "单元测试编译异常、接口参数不匹配";
-
-        // 构造提示词
         try {
-            String prompt = PromptUtil.buildPrompt(
-                    "code-fix-agent.txt",
-                    "订单后端Controller代码",
-                    errorLog
-            );
+            String errorLog = state.getTestResult().getReport();
 
-            //llm修复后的代码
+            // 从提示词文件加载（统一规范！）
+            String prompt = PromptUtil.fixPrompt(errorLog);
+
+            // 调用大模型
             String fixedCode = llmClient.chat(prompt);
 
-            // 覆盖写入原文件
-            String path = "business-workspace/order-service/src/main/java/com/example/order/OrderController.java";
-            fileTool.write(path, fixedCode);
+            // 覆盖写入
+            fileTool.write(
+                    "business-workspace/order-service/src/main/java/com/example/order/OrderController.java",
+                    fixedCode
+            );
 
-            System.out.println("=== 代码修复完成，已覆盖原文件 ===");
         } catch (Exception e) {
-            state.addError("代码修复失败：" + e.getMessage());
             e.printStackTrace();
         }
         return state;
     }
+
 
     @Override
     public String getAgentName() {

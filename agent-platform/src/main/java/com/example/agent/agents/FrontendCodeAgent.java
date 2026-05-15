@@ -26,7 +26,7 @@ public class FrontendCodeAgent implements BaseAgent{
 
         try {
             String prdInfo = new ObjectMapper().writeValueAsString(state.getPrdAnalysis());
-            String prompt = PromptUtil.buildFrontendPrompt(prdInfo);
+            String prompt = PromptUtil.frontendPrompt(prdInfo);
 
             String raw = llmClient.chat(prompt);
             String json = JsonCleanUtil.cleanJson(raw);
