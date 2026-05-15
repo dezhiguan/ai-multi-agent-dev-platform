@@ -4,8 +4,12 @@ import com.example.agent.llm.LlmClient;
 import com.example.agent.state.AgentState;
 import com.example.agent.tools.FileTool;
 import com.example.agent.tools.PromptUtil;
+import com.example.agent.util.JsonCleanUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.Map;
 
 
 @Component
@@ -14,39 +18,33 @@ public class FrontendCodeAgent implements BaseAgent{
 
     private final LlmClient llmClient;
     private final FileTool fileTool;
+    private final ObjectMapper objectMapper;
 
     @Override
     public AgentState execute(AgentState state) {
-        System.out.println("=== FrontendCodeAgent 开始生成前端代码 ===");
+        System.out.println("=== FrontendCodeAgent 开始真实生成前端代码 ===");
 
-        //1.构建提示词
         try {
-            String prompt = PromptUtil.buildPrompt("frontend-code-agent.txt",
-                    state.getPrdAnalysis() != null ? state.getPrdAnalysis().toString() : "",
-                    state.getRagContext() != null ? state.getRagContext().toString() : "");
+            String prdInfo = new ObjectMapper().writeValueAsString(state.getPrdAnalysis());
+            String prompt = PromptUtil.buildFrontendPrompt(prdInfo);
 
-            //2.llm生成代码
-            String code = llmClient.chat(prompt);
+            String raw = llmClient.chat(prompt);
+            String json = JsonCleanUtil.cleanJson(raw);
+            Map<String, String> codeMap = objectMapper.readValue(json, Map.class);
 
-            //3.写入文件
-            String path = "business-workspace/order-web/src/pages/OrderPage.tsx";
-            fileTool.write(path, code);
+            String base = "business-workspace/order-web/src/";
+            for (Map.Entry<String, String> entry : codeMap.entrySet()) {
+                fileTool.write(base + entry.getKey(), entry.getValue());
+                System.out.println("写入前端：" + entry.getKey());
+            }
 
-            //4.更新状态
             state.getFrontendCodeResult().setSuccess(true);
-            state.getFrontendCodeResult().setCodePath(path);
-
-            System.out.println("=== 前端代码生成完成：" + path);
+            System.out.println("=== 前端代码全部生成完成 ===");
         } catch (Exception e) {
-            state.addError("前端生成失败：" + e.getMessage());
             e.printStackTrace();
+            state.addError("前端生成失败：" + e.getMessage());
         }
-
-
-
-
-
-        return null;
+        return state;
     }
 
     @Override
