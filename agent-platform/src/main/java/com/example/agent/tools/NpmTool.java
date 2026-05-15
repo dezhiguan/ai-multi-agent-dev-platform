@@ -21,10 +21,26 @@ public class NpmTool {
     }
 
     /**
+     * npm run build
+     */
+    public String build(String webDir) throws Exception {
+        String cmd = "cd " + webDir + " && npm run build";
+        return terminalTool.exec(cmd);
+    }
+
+    /**
      * npm run dev
      */
     public String dev(String webDir) throws Exception {
         String cmd = "cd " + webDir + " && npm run dev";
+        return terminalTool.exec(cmd);
+    }
+
+    /**
+     * 后台启动 Vite 前端服务
+     */
+    public String devBackground(String webDir) throws Exception {
+        String cmd = "cd " + webDir + " && nohup npm run dev > frontend.log 2>&1 &";
         return terminalTool.exec(cmd);
     }
 }

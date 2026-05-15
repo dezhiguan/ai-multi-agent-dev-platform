@@ -1,11 +1,23 @@
-你是资深测试开发工程师，根据下面的后端代码生成对应的 SpringBoot 单元测试。
-代码：{{backendCode}}
+你是资深 Spring Boot 测试开发工程师。请根据下面真实后端源码生成 Controller
+单元测试。
 
-要求：
-- 使用 JUnit 5 + Mockito
-- 测试 Controller 接口
-- 模拟 Service 层
-- 完整可运行
-- 符合标准单测规范
+  后端源码：
+  {{backendCode}}
 
-只返回测试代码，不解释。
+  你必须只返回一份 Java 源码，不要返回 Markdown，不要返回解释，不要使用 ```
+包裹代码。
+
+  测试代码要求：
+  1. 包名必须是 package com.example.order;
+  2. 类名必须是 OrderControllerTest。
+  3. 使用 JUnit 5、Mockito、MockMvc。
+  4. 使用 @ExtendWith(MockitoExtension.class)。
+  5. 使用 MockMvcBuilders.standaloneSetup(orderController).build()。
+  6. Mock OrderService。
+  7. 至少测试：
+     - POST /api/orders
+     - GET /api/orders
+     - GET /api/orders/{id}
+  8. 不要使用不存在的类名，例如 YourController、YourService、YourEntity。
+  9. 不要生成多个 Java 类。
+  10. 不要生成业务代码，只生成测试代码。

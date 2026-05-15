@@ -5,6 +5,7 @@ import com.example.agent.state.*;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,6 +30,8 @@ public class AgentSupervisor {
     private final CodeFixAgent codeFixAgent;
 
     private final RuntimeAgent runtimeAgent;
+
+    private static final int MAX_FIX_RETRY = 2;
 
     // 自动注入所有实现了BaseAgent的Agent
     private final List<BaseAgent> agentList;
@@ -77,14 +80,53 @@ public class AgentSupervisor {
         context.setTaskId(taskId);
         context.setAgentState(agentState);
 
-        for (WorkflowStep step : workflowSequence) {
-            if (context.isHasError()) break;
-            context.setCurrentStep(step);
-            executeStep(context);
-            context.getFinishedSteps().add(step);
+        executeAndRecord(context, WorkflowStep.PRD_ANALYSIS);
+        executeAndRecord(context, WorkflowStep.RAG_RETRIEVE);
+        executeAndRecord(context,
+                WorkflowStep.BACKEND_CODE_GENERATE);
+        executeAndRecord(context,
+                WorkflowStep.FRONTEND_CODE_GENERATE);
+
+        executeAndRecord(context, WorkflowStep.TEST_EXECUTE);
+
+        int fixCount = 0;
+        while (!
+                context.getAgentState().getTestResult().isPass() &&
+                fixCount < MAX_FIX_RETRY) {
+            executeAndRecord(context, WorkflowStep.CODE_FIX);
+            executeAndRecord(context,
+                    WorkflowStep.TEST_EXECUTE);
+            fixCount++;
+        }
+
+        if (context.getAgentState().getTestResult().isPass()) {
+            executeAndRecord(context, WorkflowStep.RUNTIME_START);
+        } else {
+            context.setHasError(true);
+            context.setErrorMsg("自动修复后测试仍未通过，已停止启动服务");
         }
 
         return context;
+    }
+
+    private void executeAndRecord(WorkflowContext context,
+                                  WorkflowStep step) {
+        if (context.isHasError()) {
+            return;
+        }
+
+        context.setCurrentStep(step);
+        executeStep(context);
+        context.getFinishedSteps().add(step);
+
+        if (!context.getAgentState().getErrorList().isEmpty()) {
+            context.setHasError(true);
+
+            context.setErrorMsg(
+                    context.getAgentState().getErrorList()
+                            .get(context.getAgentState().getErrorList().size() - 1)
+            );
+        }
     }
 
     /**
@@ -98,27 +140,27 @@ public class AgentSupervisor {
         System.out.println("正在执行步骤：" + step.getDesc());
         System.out.println("=====================================");
 
-        if(step == WorkflowStep.PRD_ANALYSIS) {
+        if (step == WorkflowStep.PRD_ANALYSIS) {
             prdAgent.execute(state);
         }
 
-        if(step == WorkflowStep.RAG_RETRIEVE) {
+        if (step == WorkflowStep.RAG_RETRIEVE) {
             ragAgent.execute(state);
         }
 
-        if(step == WorkflowStep.BACKEND_CODE_GENERATE) {
+        if (step == WorkflowStep.BACKEND_CODE_GENERATE) {
             backendCodeAgent.execute(state);
         }
 
-        if(step == WorkflowStep.FRONTEND_CODE_GENERATE) {
+        if (step == WorkflowStep.FRONTEND_CODE_GENERATE) {
             frontendCodeAgent.execute(state);
         }
 
-        if(step == WorkflowStep.TEST_EXECUTE) {
+        if (step == WorkflowStep.TEST_EXECUTE) {
             testAgent.execute(state);
         }
 
-        if(step == WorkflowStep.CODE_FIX) {
+        if (step == WorkflowStep.CODE_FIX) {
             codeFixAgent.execute(state);
         }
 

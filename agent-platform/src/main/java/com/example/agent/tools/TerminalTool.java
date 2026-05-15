@@ -1,8 +1,7 @@
 package com.example.agent.tools;
 
 import org.springframework.stereotype.Component;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+
 
 /**
  * Shell 命令执行工具
@@ -14,22 +13,29 @@ public class TerminalTool {
      * 执行命令并返回输出
      */
     public String exec(String command) throws Exception {
-        Process process = Runtime.getRuntime().exec(command);
+        Process process = new ProcessBuilder(shellCommand(command))
+                .redirectErrorStream(true)
+                .start();
 
-        // 读取输出
-        BufferedReader reader = new BufferedReader(
-                new InputStreamReader(process.getInputStream()));
-        StringBuilder sb = new StringBuilder();
-        String line;
-        while ((line = reader.readLine()) != null) {
-            sb.append(line).append("\n");
-        }
+        String output = new
+                String(process.getInputStream().readAllBytes());
+        int exitCode = process.waitFor();
 
-        // 等待执行完成
-        process.waitFor();
-        reader.close();
         process.destroy();
 
-        return sb.toString();
+        return "exitCode=" + exitCode + "\n" + output;
     }
+
+    private String[] shellCommand(String command) {
+        if (isWindows()) {
+            return new String[]{"cmd.exe", "/c", command};
+        }
+        return new String[]{"/bin/sh", "-c", command};
+    }
+
+    private boolean isWindows() {
+        return
+                System.getProperty("os.name").toLowerCase().contains("win");
+    }
+
 }

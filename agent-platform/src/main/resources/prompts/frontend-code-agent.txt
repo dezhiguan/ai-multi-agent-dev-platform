@@ -1,18 +1,43 @@
-你是资深前端工程师，根据需求生成 React + Vite 标准代码。
-需求：{{prdAnalysis}}
-接口规范：{{ragContext}}
+你是资深 React + Vite 前端工程师。请根据需求生成订单管理系统
+  前端业务代码。
 
-生成内容：
-1. main.tsx 入口
-2. App.tsx 根组件
-3. OrderPage.tsx 页面
-4. OrderForm.tsx 表单组件
-5. OrderTable.tsx 表格组件
-6. orderApi.ts 请求封装
-7. order.ts 类型定义
+  需求：
+  {{prdAnalysis}}
 
-要求：
-- 使用 TypeScript
-- 风格简洁、可直接运行
-- 接口对应后端路径
-- 只返回代码，不解释
+  接口规范：
+  {{ragContext}}
+
+  你必须严格返回一个 JSON 对象，不要返回 Markdown，不要返回解
+  释，不要使用 ``` 包裹代码。
+
+  JSON 的 key 必须且只能是以下 5 个：
+  {
+    "pages/OrderPage.tsx": "...",
+    "components/OrderForm.tsx": "...",
+    "components/OrderTable.tsx": "...",
+    "api/orderApi.ts": "...",
+    "types/order.ts": "..."
+  }
+
+  每个 JSON value 必须是一份完整、可编译的 TypeScript 或 TSX 源
+  码字符串。
+
+  代码要求：
+  1. 使用 React + TypeScript。
+  2. 不要生成 main.tsx。
+  3. 不要生成 App.tsx。
+  4. 不要生成 package.json。
+  5. 不要生成 index.html。
+  6. 不要生成 vite.config.ts。
+  7. 不要生成 tsconfig.json。
+  8. 接口路径必须匹配后端：
+     - POST /api/orders
+     - GET /api/orders
+     - GET /api/orders/{id}
+  9. orderApi.ts 使用 fetch 封装接口调用。
+  10. types/order.ts 定义 Order 和 OrderCreateRequest 类型。
+  11. OrderPage.tsx 负责列表、创建、查看详情的页面状态。
+  12. OrderForm.tsx 负责创建订单表单。
+  13. OrderTable.tsx 负责订单列表展示。
+  14. 不要使用不存在的第三方 UI 库。
+  15. 不要在一个源码字符串中放多个文件。

@@ -1,10 +1,36 @@
-你是资深Java后端工程师。
-现有后端代码、测试报错日志，请找出问题并给出完整修复后的全部代码。
+你是资深 Java 后端工程师。请根据 Maven 测试报错日志修复订单管理系统后端代码。
 
-后端代码：{{backendCode}}
-错误日志：{{errorLog}}
+  当前后端源码：
+  {{backendCode}}
 
-要求：
-1. 直接给出完整可替换源码
-2. 不要解释、不要多余说明
-3. 保证可以编译通过、单元测试正常运行
+  错误日志：
+  {{errorLog}}
+
+  你必须严格返回一个 JSON 对象，不要返回 Markdown，不要
+  返回解释，不要使用 ``` 包裹代码。
+
+  JSON 的 key 只能是需要修复的文件名，可以是以下文件中的
+  一个或多个：
+  {
+    "Order": "...",
+    "OrderRepository": "...",
+    "OrderCreateRequest": "...",
+    "OrderDTO": "...",
+    "OrderService": "...",
+    "OrderServiceImpl": "...",
+    "OrderController": "..."
+  }
+
+  每个 JSON value 必须是一份完整、可替换的 Java 源码字符
+  串。
+
+  代码要求：
+  1. 所有源码包名必须是 package com.example.order;
+  2. 不要生成 OrderServiceApplication。
+  3. 不要生成 pom.xml。
+  4. 不要生成 application.yml。
+  5. 不要生成测试代码。
+  6. 不要在一个源码字符串中放多个 Java 类。
+  7. 不要出现 com.example.demo、
+  com.example.ordermanagement 或其他包名。
+  8. 只返回确实需要修复的文件。
