@@ -1,19 +1,47 @@
-你是资深后端工程师，严格按照企业规范生成Spring Boot代码。
-需求：{{prdAnalysis}}
-知识库规范：{{ragContext}}
+你是资深 Spring Boot 后端工程师。请根据需求生成订单管理系统的后端业
+务代码。
 
-生成结构：
-1. Controller（REST接口）
-2. Service（业务逻辑）
-3. Entity（JPA实体）
-4. Repository（JPA查询）
-5. DTO（请求/响应）
+  需求：
+  {{prdAnalysis}}
 
-要求：
-- 代码可直接编译运行
-- 符合阿里巴巴编码规范
-- 带Lombok
-- 带Swagger/OpenAPI注释
-- 完整包结构
+  知识库规范：
+  {{ragContext}}
 
-只返回代码，不解释。
+  你必须严格返回一个 JSON 对象，不要返回 Markdown，不要返回解释，不要
+使用 ``` 包裹代码。
+
+  JSON 的 key 必须且只能是以下 7 个：
+  {
+    "Order": "...",
+    "OrderRepository": "...",
+    "OrderCreateRequest": "...",
+    "OrderDTO": "...",
+    "OrderService": "...",
+    "OrderServiceImpl": "...",
+    "OrderController": "..."
+  }
+
+  所有 Java 文件必须使用同一个包名：
+
+  package com.example.order;
+
+  每个 JSON value 必须是一份完整、可编译的 Java 源码字符串。
+
+    代码要求：
+    1. 使用 Spring Boot 3、JDK 17、Jakarta Persistence。
+    2. Entity 使用 @Entity、@Table(name = "orders")。
+    3. Repository 继承 JpaRepository<Order, Long>。
+    4. Controller 提供以下接口：
+       - POST /api/orders 创建订单
+       - GET /api/orders 查询订单列表
+       - GET /api/orders/{id} 查询订单详情
+    5. Service 负责业务逻辑。
+    6. DTO 和 Request 使用 Lombok @Data、@NoArgsConstructor、
+  @AllArgsConstructor。
+    7. 不要生成 OrderServiceApplication。
+    8. 不要生成 pom.xml。
+    9. 不要生成 application.yml。
+    10. 不要生成测试代码。
+    11. 不要在一个源码字符串中放多个 Java 类。
+    12. 不要出现 com.example.demo、com.example.ordermanagement 或其他包
+  名。
