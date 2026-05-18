@@ -2,3 +2,6 @@
 .idea/
 target/
 *.class
+node_modules/
+dist/
+*.log

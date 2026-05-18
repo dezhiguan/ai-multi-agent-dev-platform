@@ -7,11 +7,15 @@ import com.example.agent.tools.PromptUtil;
 import com.example.agent.util.JsonCleanUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class FrontendCodeAgent implements BaseAgent {
@@ -30,29 +34,46 @@ public class FrontendCodeAgent implements BaseAgent {
 
     @Override
     public AgentState execute(AgentState state) {
-        System.out.println("=== FrontendCodeAgent 开始真实生成前端代码 ===");
+        log.info("[FrontendCodeAgent] 开始生成前端代码");
 
         try {
+            long start = System.currentTimeMillis();
+
+            log.info("[FrontendCodeAgent] 开始构建提示词");
             String prdInfo = objectMapper.writeValueAsString(state.getPrdAnalysis());
             String prompt = PromptUtil.frontendPrompt(prdInfo);
+            log.info("[FrontendCodeAgent] 提示词构建完成，promptLength={}", prompt.length());
 
+            log.info("[FrontendCodeAgent] 开始调用大模型");
             String raw = llmClient.chat(prompt);
+            log.info("[FrontendCodeAgent] 大模型返回完成，耗时={}ms，rawLength={}",
+                    System.currentTimeMillis() - start,
+                    raw == null ? 0 : raw.length());
+
+            log.info("[FrontendCodeAgent] 开始清洗 JSON");
             String json = JsonCleanUtil.cleanJson(raw);
+
+            log.info("[FrontendCodeAgent] 开始解析 JSON");
             Map<String, String> codeMap = objectMapper.readValue(json, Map.class);
+            log.info("[FrontendCodeAgent] JSON 解析完成，files={}", codeMap.keySet());
+
+            log.info("[FrontendCodeAgent] 开始校验前端生成结果");
             validateGeneratedCode(codeMap);
 
             String base = "business-workspace/order-web/src/";
             for (Map.Entry<String, String> entry : codeMap.entrySet()) {
                 fileTool.write(base + entry.getKey(), entry.getValue());
-                System.out.println("写入前端：" + entry.getKey());
+                log.info("[FrontendCodeAgent] 写入前端文件：{}", entry.getKey());
             }
 
+            log.info("[FrontendCodeAgent] 开始写入 Vite 工程骨架");
             writeFrontendScaffold();
 
             state.getFrontendCodeResult().setSuccess(true);
-            System.out.println("=== 前端代码全部生成完成 ===");
+            log.info("[FrontendCodeAgent] 前端代码生成完成，总耗时={}ms",
+                    System.currentTimeMillis() - start);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("[FrontendCodeAgent] 前端生成失败", e);
             state.addError("前端生成失败：" + e.getMessage());
         }
         return state;
@@ -75,6 +96,15 @@ public class FrontendCodeAgent implements BaseAgent {
                 throw new IllegalArgumentException(fileName + " 包含 Markdown 代码块");
             }
 
+            for (String forbiddenField : forbiddenSnakeCaseFields()) {
+                if (content.contains(forbiddenField)) {
+                    throw new IllegalArgumentException(
+                            fileName + " 包含错误的下划线字段名：" +
+                                    forbiddenField + "，前端必须使用后端驼峰字段"
+                    );
+                }
+            }
+
             if (fileName.startsWith("/") || fileName.contains("..") || fileName.contains("\\")) {
                 throw new IllegalArgumentException(fileName + " 是非法路径");
             }
@@ -94,7 +124,9 @@ public class FrontendCodeAgent implements BaseAgent {
                 "    \"vite\": \"latest\",",
                 "    \"typescript\": \"latest\",",
                 "    \"react\": \"latest\",",
-                "    \"react-dom\": \"latest\"",
+                "    \"react-dom\": \"latest\",",
+                "    \"@types/react\": \"latest\",",
+                "    \"@types/react-dom\": \"latest\"",
                 "  },",
                 "  \"devDependencies\": {}",
                 "}",
@@ -146,7 +178,7 @@ public class FrontendCodeAgent implements BaseAgent {
                 "    \"strict\": true,",
                 "    \"forceConsistentCasingInFileNames\": true,",
                 "    \"module\": \"ESNext\",",
-                "    \"moduleResolution\": \"Node\",",
+                "    \"moduleResolution\": \"Bundler\",",
                 "    \"resolveJsonModule\": true,",
                 "    \"isolatedModules\": true,",
                 "    \"noEmit\": true,",
@@ -162,7 +194,7 @@ public class FrontendCodeAgent implements BaseAgent {
                 "  \"compilerOptions\": {",
                 "    \"composite\": true,",
                 "    \"module\": \"ESNext\",",
-                "    \"moduleResolution\": \"Node\",",
+                "    \"moduleResolution\": \"Bundler\",",
                 "    \"allowSyntheticDefaultImports\": true",
                 "  },",
                 "  \"include\": [\"vite.config.ts\"]",
@@ -188,6 +220,23 @@ public class FrontendCodeAgent implements BaseAgent {
                 "  return <OrderPage />;",
                 "}",
                 ""));
+    }
+
+    private String toSnakeCase(String camelCase) {
+        return camelCase.replaceAll("([a-z])([A-Z])",
+                "$1_$2").toLowerCase();
+    }
+
+    private Set<String> forbiddenSnakeCaseFields() {
+        return Set.of(
+                        "userId",
+                        "productId",
+                        "totalPrice",
+                        "createdAt",
+                        "updatedAt"
+                ).stream()
+                .map(this::toSnakeCase)
+                .collect(Collectors.toSet());
     }
 
     @Override

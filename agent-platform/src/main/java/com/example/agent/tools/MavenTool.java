@@ -57,11 +57,19 @@ public class MavenTool {
     /**
      * 后台启动 Spring Boot 服务
      */
-    public String springBootRun(String projectDir) throws
-            Exception {
-        String cmd = "cd " + projectDir + " && nohup mvn spring-boot:run > backend.log 2>&1 &";
-        return terminalTool.exec(cmd);
+    public String springBootRun(String projectDir) throws Exception {
+        File directory = new File(projectDir);
+        File logFile = new File(directory, "backend.log");
+
+        ProcessBuilder pb = new ProcessBuilder(
+                isWindows() ? "mvn.cmd" : "mvn",
+                "spring-boot:run"
+        );
+        pb.directory(directory);
+        pb.redirectErrorStream(true);
+        pb.redirectOutput(ProcessBuilder.Redirect.appendTo(logFile));
+
+        Process process = pb.start();
+        return "exitCode=0\npid=" + process.pid();
     }
-
-
 }

@@ -1,14 +1,7 @@
-package com.example.ordermanagement.service.impl;
+package com.example.order;
 
-import com.example.ordermanagement.dto.OrderCreateRequest;
-import com.example.ordermanagement.dto.OrderDTO;
-import com.example.ordermanagement.entity.Order;
-import com.example.ordermanagement.repository.OrderRepository;
-import com.example.ordermanagement.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,17 +18,15 @@ public class OrderServiceImpl implements OrderService {
         order.setProductId(request.getProductId());
         order.setQuantity(request.getQuantity());
         order.setTotalPrice(request.getTotalPrice());
-        order.setStatus("PENDING");
-        order.setCreatedAt(LocalDateTime.now());
-        order.setUpdatedAt(LocalDateTime.now());
-        Order savedOrder = orderRepository.save(order);
-        return convertToDTO(savedOrder);
+        order.setStatus(request.getStatus());
+        order = orderRepository.save(order);
+        return toDTO(order);
     }
 
     @Override
     public List<OrderDTO> getAllOrders() {
         return orderRepository.findAll().stream()
-                .map(this::convertToDTO)
+                .map(this::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -43,10 +34,10 @@ public class OrderServiceImpl implements OrderService {
     public OrderDTO getOrderById(Long id) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + id));
-        return convertToDTO(order);
+        return toDTO(order);
     }
 
-    private OrderDTO convertToDTO(Order order) {
+    private OrderDTO toDTO(Order order) {
         OrderDTO dto = new OrderDTO();
         dto.setId(order.getId());
         dto.setUserId(order.getUserId());

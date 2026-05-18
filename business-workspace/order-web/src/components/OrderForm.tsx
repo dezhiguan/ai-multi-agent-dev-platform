@@ -1,51 +1,66 @@
 import React, { useState } from 'react';
-import { Order } from '../types/order';
+import { OrderCreateRequest } from '../types/order';
+import { createOrder } from '../api/orderApi';
 
 interface OrderFormProps {
-  onSubmit: (order: Omit<Order, 'id' | 'created_at' | 'updated_at'>) => void;
-  onCancel: () => void;
+  onSuccess: () => void;
 }
 
-export const OrderForm: React.FC<OrderFormProps> = ({ onSubmit, onCancel }) => {
-  const [user_id, setUserId] = useState<number>(0);
-  const [product_id, setProductId] = useState<number>(0);
-  const [quantity, setQuantity] = useState<number>(1);
-  const [total_price, setTotalPrice] = useState<number>(0);
-  const [status, setStatus] = useState<string>('pending');
+const OrderForm: React.FC<OrderFormProps> = ({ onSuccess }) => {
+  const [formData, setFormData] = useState<OrderCreateRequest>({
+    userId: 0,
+    productId: 0,
+    quantity: 0,
+    totalPrice: 0,
+    status: '',
+  });
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === 'quantity' || name === 'totalPrice' || name === 'userId' || name === 'productId' ? Number(value) : value,
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ user_id, product_id, quantity, total_price, status });
+    setError(null);
+    try {
+      await createOrder(formData);
+      onSuccess();
+    } catch (err) {
+      setError('Failed to create order');
+    }
   };
 
   return (
     <form onSubmit={handleSubmit}>
       <div>
-        <label>用户ID:</label>
-        <input type="number" value={user_id} onChange={e => setUserId(Number(e.target.value))} required />
+        <label>User ID:</label>
+        <input type="number" name="userId" value={formData.userId} onChange={handleChange} required />
       </div>
       <div>
-        <label>产品ID:</label>
-        <input type="number" value={product_id} onChange={e => setProductId(Number(e.target.value))} required />
+        <label>Product ID:</label>
+        <input type="number" name="productId" value={formData.productId} onChange={handleChange} required />
       </div>
       <div>
-        <label>数量:</label>
-        <input type="number" value={quantity} onChange={e => setQuantity(Number(e.target.value))} min="1" required />
+        <label>Quantity:</label>
+        <input type="number" name="quantity" value={formData.quantity} onChange={handleChange} required />
       </div>
       <div>
-        <label>总价:</label>
-        <input type="number" value={total_price} onChange={e => setTotalPrice(Number(e.target.value))} min="0" step="0.01" required />
+        <label>Total Price:</label>
+        <input type="number" step="0.01" name="totalPrice" value={formData.totalPrice} onChange={handleChange} required />
       </div>
       <div>
-        <label>状态:</label>
-        <select value={status} onChange={e => setStatus(e.target.value)}>
-          <option value="pending">待处理</option>
-          <option value="completed">已完成</option>
-          <option value="cancelled">已取消</option>
-        </select>
+        <label>Status:</label>
+        <input type="text" name="status" value={formData.status} onChange={handleChange} required />
       </div>
-      <button type="submit">提交</button>
-      <button type="button" onClick={onCancel}>取消</button>
+      {error && <div style={{ color: 'red' }}>{error}</div>}
+      <button type="submit">Submit</button>
     </form>
   );
 };
+
+export default OrderForm;

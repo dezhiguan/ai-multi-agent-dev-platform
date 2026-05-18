@@ -1,71 +1,102 @@
 import React, { useState, useEffect } from 'react';
-import { OrderTable } from '../components/OrderTable';
-import { OrderForm } from '../components/OrderForm';
-import { fetchOrders, createOrder, fetchOrderById } from '../api/orderApi';
+import OrderForm from '../components/OrderForm';
+import OrderTable from '../components/OrderTable';
 import { Order } from '../types/order';
+import { getOrders, getOrderById } from '../api/orderApi';
 
 const OrderPage: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
-  const [view, setView] = useState<'list' | 'create' | 'detail'>('list');
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (view === 'list') {
-      fetchOrders().then(setOrders);
+  const fetchOrders = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getOrders();
+      setOrders(data);
+    } catch (err) {
+      setError('Failed to fetch orders');
+    } finally {
+      setLoading(false);
     }
-  }, [view]);
-
-  const handleCreate = async (order: Omit<Order, 'id' | 'created_at' | 'updated_at'>) => {
-    await createOrder(order);
-    setView('list');
   };
-
-  const handleViewDetail = (id: number) => {
-    setSelectedOrderId(id);
-    setView('detail');
-  };
-
-  const handleBack = () => {
-    setView('list');
-    setSelectedOrderId(null);
-  };
-
-  return (
-    <div>
-      <h1>订单管理系统</h1>
-      {view === 'list' && (
-        <>
-          <button onClick={() => setView('create')}>创建订单</button>
-          <OrderTable orders={orders} onViewDetail={handleViewDetail} />
-        </>
-      )}
-      {view === 'create' && <OrderForm onSubmit={handleCreate} onCancel={handleBack} />}
-      {view === 'detail' && selectedOrderId && <OrderDetail id={selectedOrderId} onBack={handleBack} />}
-    </div>
-  );
-};
-
-const OrderDetail: React.FC<{ id: number; onBack: () => void }> = ({ id, onBack }) => {
-  const [order, setOrder] = useState<Order | null>(null);
 
   useEffect(() => {
-    fetchOrderById(id).then(setOrder);
-  }, [id]);
+    fetchOrders();
+  }, []);
 
-  if (!order) return <div>加载中...</div>;
+  const handleViewDetail = async (id: number) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const order = await getOrderById(id);
+      setSelectedOrder(order);
+      setShowForm(false);
+    } catch (err) {
+      setError('Failed to fetch order detail');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateOrder = () => {
+    setSelectedOrder(null);
+    setShowForm(true);
+  };
+
+  const handleFormSuccess = () => {
+    setShowForm(false);
+    fetchOrders();
+  };
+
+  const handleBackToList = () => {
+    setSelectedOrder(null);
+    setShowForm(false);
+  };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
+  if (selectedOrder) {
+    return (
+      <div>
+        <h2>Order Detail</h2>
+        <p>ID: {selectedOrder.id}</p>
+        <p>User ID: {selectedOrder.userId}</p>
+        <p>Product ID: {selectedOrder.productId}</p>
+        <p>Quantity: {selectedOrder.quantity}</p>
+        <p>Total Price: {selectedOrder.totalPrice}</p>
+        <p>Status: {selectedOrder.status}</p>
+        <p>Created At: {selectedOrder.createdAt}</p>
+        <p>Updated At: {selectedOrder.updatedAt}</p>
+        <button onClick={handleBackToList}>Back to List</button>
+      </div>
+    );
+  }
+
+  if (showForm) {
+    return (
+      <div>
+        <h2>Create Order</h2>
+        <OrderForm onSuccess={handleFormSuccess} />
+        <button onClick={handleBackToList}>Cancel</button>
+      </div>
+    );
+  }
 
   return (
     <div>
-      <h2>订单详情</h2>
-      <p>ID: {order.id}</p>
-      <p>用户ID: {order.user_id}</p>
-      <p>产品ID: {order.product_id}</p>
-      <p>数量: {order.quantity}</p>
-      <p>总价: {order.total_price}</p>
-      <p>状态: {order.status}</p>
-      <p>创建时间: {order.created_at}</p>
-      <p>更新时间: {order.updated_at}</p>
-      <button onClick={onBack}>返回</button>
+      <h1>Order Management</h1>
+      <button onClick={handleCreateOrder}>Create Order</button>
+      <OrderTable orders={orders} onViewDetail={handleViewDetail} />
     </div>
   );
 };

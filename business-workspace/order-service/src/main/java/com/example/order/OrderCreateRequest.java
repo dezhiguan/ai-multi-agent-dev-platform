@@ -1,9 +1,8 @@
-package com.example.ordermanagement.dto;
+package com.example.order;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-
 import java.math.BigDecimal;
 
 @Data
@@ -14,4 +13,5 @@ public class OrderCreateRequest {
     private Long productId;
     private Integer quantity;
     private BigDecimal totalPrice;
+    private String status;
 }

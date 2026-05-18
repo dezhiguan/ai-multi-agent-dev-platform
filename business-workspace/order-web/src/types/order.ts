@@ -1,10 +1,18 @@
 export interface Order {
   id: number;
-  user_id: number;
-  product_id: number;
+  userId: number;
+  productId: number;
   quantity: number;
-  total_price: number;
+  totalPrice: number;
   status: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OrderCreateRequest {
+  userId: number;
+  productId: number;
+  quantity: number;
+  totalPrice: number;
+  status: string;
 }

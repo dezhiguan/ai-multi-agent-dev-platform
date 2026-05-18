@@ -1,4 +1,6 @@
-```java
+package com.example.order;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -9,117 +11,88 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
-public class YourControllerTest {
+public class OrderControllerTest {
+
+    @Mock
+    private OrderService orderService;
+
+    @InjectMocks
+    private OrderController orderController;
 
     private MockMvc mockMvc;
 
-    @Mock
-    private YourService yourService;
-
-    @InjectMocks
-    private YourController yourController;
+    private ObjectMapper objectMapper;
 
     @BeforeEach
     public void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(yourController).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(orderController).build();
+        objectMapper = new ObjectMapper();
     }
 
     @Test
-    public void testGetById_Success() throws Exception {
-        // 准备测试数据
-        Long id = 1L;
-        YourEntity expectedEntity = new YourEntity();
-        expectedEntity.setId(id);
-        expectedEntity.setName("test");
+    public void testCreateOrder() throws Exception {
+        OrderCreateRequest request = new OrderCreateRequest(1L, 1L, 2, new BigDecimal("100.00"), "PENDING");
+        OrderDTO orderDTO = new OrderDTO(1L, 1L, 1L, 2, new BigDecimal("100.00"), "PENDING", LocalDateTime.now(), LocalDateTime.now());
 
-        // 模拟Service层行为
-        when(yourService.getById(id)).thenReturn(expectedEntity);
+        when(orderService.createOrder(any(OrderCreateRequest.class))).thenReturn(orderDTO);
 
-        // 执行请求并验证
-        mockMvc.perform(get("/api/your-endpoint/{id}", id)
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(id))
-                .andExpect(jsonPath("$.name").value("test"));
-    }
-
-    @Test
-    public void testCreate_Success() throws Exception {
-        // 准备测试数据
-        YourCreateRequest request = new YourCreateRequest();
-        request.setName("new entity");
-
-        YourEntity createdEntity = new YourEntity();
-        createdEntity.setId(1L);
-        createdEntity.setName("new entity");
-
-        // 模拟Service层行为
-        when(yourService.create(any(YourCreateRequest.class))).thenReturn(createdEntity);
-
-        // 执行请求并验证
-        mockMvc.perform(post("/api/your-endpoint")
+        mockMvc.perform(post("/api/orders")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"name\":\"new entity\"}"))
+                .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1L))
-                .andExpect(jsonPath("$.name").value("new entity"));
+                .andExpect(jsonPath("$.userId").value(1L))
+                .andExpect(jsonPath("$.productId").value(1L))
+                .andExpect(jsonPath("$.quantity").value(2))
+                .andExpect(jsonPath("$.totalPrice").value(100.00))
+                .andExpect(jsonPath("$.status").value("PENDING"));
     }
 
     @Test
-    public void testUpdate_Success() throws Exception {
-        // 准备测试数据
-        Long id = 1L;
-        YourUpdateRequest request = new YourUpdateRequest();
-        request.setName("updated entity");
+    public void testGetAllOrders() throws Exception {
+        OrderDTO order1 = new OrderDTO(1L, 1L, 1L, 2, new BigDecimal("100.00"), "PENDING", LocalDateTime.now(), LocalDateTime.now());
+        OrderDTO order2 = new OrderDTO(2L, 2L, 2L, 1, new BigDecimal("50.00"), "COMPLETED", LocalDateTime.now(), LocalDateTime.now());
+        List<OrderDTO> orders = Arrays.asList(order1, order2);
 
-        YourEntity updatedEntity = new YourEntity();
-        updatedEntity.setId(id);
-        updatedEntity.setName("updated entity");
+        when(orderService.getAllOrders()).thenReturn(orders);
 
-        // 模拟Service层行为
-        when(yourService.update(eq(id), any(YourUpdateRequest.class))).thenReturn(updatedEntity);
-
-        // 执行请求并验证
-        mockMvc.perform(put("/api/your-endpoint/{id}", id)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"name\":\"updated entity\"}"))
+        mockMvc.perform(get("/api/orders")
+                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(id))
-                .andExpect(jsonPath("$.name").value("updated entity"));
+                .andExpect(jsonPath("$[0].id").value(1L))
+                .andExpect(jsonPath("$[0].userId").value(1L))
+                .andExpect(jsonPath("$[1].id").value(2L))
+                .andExpect(jsonPath("$[1].userId").value(2L));
     }
 
     @Test
-    public void testDelete_Success() throws Exception {
-        // 准备测试数据
-        Long id = 1L;
+    public void testGetOrderById() throws Exception {
+        OrderDTO orderDTO = new OrderDTO(1L, 1L, 1L, 2, new BigDecimal("100.00"), "PENDING", LocalDateTime.now(), LocalDateTime.now());
 
-        // 模拟Service层行为
-        when(yourService.delete(id)).thenReturn(true);
+        when(orderService.getOrderById(eq(1L))).thenReturn(orderDTO);
 
-        // 执行请求并验证
-        mockMvc.perform(delete("/api/your-endpoint/{id}", id)
+        mockMvc.perform(get("/api/orders/1")
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNoContent());
-    }
-
-    @Test
-    public void testGetById_NotFound() throws Exception {
-        // 准备测试数据
-        Long id = 999L;
-
-        // 模拟Service层行为
-        when(yourService.getById(id)).thenThrow(new ResourceNotFoundException("Entity not found"));
-
-        // 执行请求并验证
-        mockMvc.perform(get("/api/your-endpoint/{id}", id)
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.userId").value(1L))
+                .andExpect(jsonPath("$.productId").value(1L))
+                .andExpect(jsonPath("$.quantity").value(2))
+                .andExpect(jsonPath("$.totalPrice").value(100.00))
+                .andExpect(jsonPath("$.status").value("PENDING"));
     }
 }
-```

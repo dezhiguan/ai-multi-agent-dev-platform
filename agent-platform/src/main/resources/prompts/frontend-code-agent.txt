@@ -41,3 +41,35 @@
   13. OrderTable.tsx 负责订单列表展示。
   14. 不要使用不存在的第三方 UI 库。
   15. 不要在一个源码字符串中放多个文件。
+
+
+  【字段名强制要求】
+    后端接口使用 Spring Boot Jackson 默认 JSON 字段名，字段是驼峰格式。
+    前端所有 TypeScript 类型、React state、表单 input name、fetch 请求
+    体、页面展示字段，必须使用驼峰字段：
+
+    Order:
+    id
+    userId
+    productId
+    quantity
+    totalPrice
+    status
+    createdAt
+    updatedAt
+
+    OrderCreateRequest:
+    userId
+    productId
+    quantity
+    totalPrice
+    status
+
+    严禁使用下划线字段：
+    user_id
+    product_id
+    total_price
+    created_at
+    updated_at
+
+    如果输出内容包含上述下划线字段，则结果无效。

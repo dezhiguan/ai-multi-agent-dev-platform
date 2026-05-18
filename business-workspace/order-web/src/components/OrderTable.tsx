@@ -6,35 +6,41 @@ interface OrderTableProps {
   onViewDetail: (id: number) => void;
 }
 
-export const OrderTable: React.FC<OrderTableProps> = ({ orders, onViewDetail }) => {
+const OrderTable: React.FC<OrderTableProps> = ({ orders, onViewDetail }) => {
   return (
     <table>
       <thead>
         <tr>
           <th>ID</th>
-          <th>用户ID</th>
-          <th>产品ID</th>
-          <th>数量</th>
-          <th>总价</th>
-          <th>状态</th>
-          <th>创建时间</th>
-          <th>操作</th>
+          <th>User ID</th>
+          <th>Product ID</th>
+          <th>Quantity</th>
+          <th>Total Price</th>
+          <th>Status</th>
+          <th>Created At</th>
+          <th>Updated At</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
-        {orders.map(order => (
+        {orders.map((order) => (
           <tr key={order.id}>
             <td>{order.id}</td>
-            <td>{order.user_id}</td>
-            <td>{order.product_id}</td>
+            <td>{order.userId}</td>
+            <td>{order.productId}</td>
             <td>{order.quantity}</td>
-            <td>{order.total_price}</td>
+            <td>{order.totalPrice}</td>
             <td>{order.status}</td>
-            <td>{order.created_at}</td>
-            <td><button onClick={() => onViewDetail(order.id)}>查看详情</button></td>
+            <td>{order.createdAt}</td>
+            <td>{order.updatedAt}</td>
+            <td>
+              <button onClick={() => onViewDetail(order.id)}>View Detail</button>
+            </td>
           </tr>
         ))}
       </tbody>
     </table>
   );
 };
+
+export default OrderTable;

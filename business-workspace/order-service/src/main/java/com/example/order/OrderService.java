@@ -1,7 +1,4 @@
-package com.example.ordermanagement.service;
-
-import com.example.ordermanagement.dto.OrderCreateRequest;
-import com.example.ordermanagement.dto.OrderDTO;
+package com.example.order;
 
 import java.util.List;
 

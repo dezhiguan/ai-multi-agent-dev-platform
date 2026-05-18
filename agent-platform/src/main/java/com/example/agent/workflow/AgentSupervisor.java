@@ -4,6 +4,7 @@ import com.example.agent.agents.*;
 import com.example.agent.state.*;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.List;
  * 多Agent中央调度器
  * 作用：按顺序管理、执行所有Agent
  */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class AgentSupervisor {
@@ -80,22 +82,19 @@ public class AgentSupervisor {
         context.setTaskId(taskId);
         context.setAgentState(agentState);
 
+        log.info("[Workflow] taskId={} 工作流开始", taskId);
+
         executeAndRecord(context, WorkflowStep.PRD_ANALYSIS);
         executeAndRecord(context, WorkflowStep.RAG_RETRIEVE);
-        executeAndRecord(context,
-                WorkflowStep.BACKEND_CODE_GENERATE);
-        executeAndRecord(context,
-                WorkflowStep.FRONTEND_CODE_GENERATE);
+        executeAndRecord(context, WorkflowStep.BACKEND_CODE_GENERATE);
+        executeAndRecord(context, WorkflowStep.FRONTEND_CODE_GENERATE);
 
         executeAndRecord(context, WorkflowStep.TEST_EXECUTE);
 
         int fixCount = 0;
-        while (!
-                context.getAgentState().getTestResult().isPass() &&
-                fixCount < MAX_FIX_RETRY) {
+        while (!context.getAgentState().getTestResult().isPass() && fixCount < MAX_FIX_RETRY) {
             executeAndRecord(context, WorkflowStep.CODE_FIX);
-            executeAndRecord(context,
-                    WorkflowStep.TEST_EXECUTE);
+            executeAndRecord(context, WorkflowStep.TEST_EXECUTE);
             fixCount++;
         }
 
@@ -106,26 +105,47 @@ public class AgentSupervisor {
             context.setErrorMsg("自动修复后测试仍未通过，已停止启动服务");
         }
 
+        log.info("[Workflow] taskId={} 工作流结束，hasError={}，errorMsg={}",
+                taskId,
+                context.isHasError(),
+                context.getErrorMsg());
         return context;
     }
 
-    private void executeAndRecord(WorkflowContext context,
-                                  WorkflowStep step) {
+    private void executeAndRecord(WorkflowContext context, WorkflowStep step) {
         if (context.isHasError()) {
+            log.warn("[Workflow] taskId={} 已有错误，跳过步骤：{}",
+                    context.getTaskId(), step.getDesc());
             return;
         }
 
+        long start = System.currentTimeMillis();
+        log.info("[Workflow] taskId={} 开始步骤：{}", context.getTaskId(), step.getDesc());
+
         context.setCurrentStep(step);
-        executeStep(context);
-        context.getFinishedSteps().add(step);
+
+        try {
+            executeStep(context);
+            context.getFinishedSteps().add(step);
+
+            long cost = System.currentTimeMillis() - start;
+            log.info("[Workflow] taskId={} 完成步骤：{}，耗时={}ms",
+                    context.getTaskId(), step.getDesc(), cost);
+        } catch (Exception e) {
+            context.setHasError(true);
+            context.setErrorMsg(step.getDesc() + " 执行异常：" + e.getMessage());
+            log.error("[Workflow] taskId={} 步骤异常：{}",
+                    context.getTaskId(), step.getDesc(), e);
+            return;
+        }
 
         if (!context.getAgentState().getErrorList().isEmpty()) {
             context.setHasError(true);
-
-            context.setErrorMsg(
-                    context.getAgentState().getErrorList()
-                            .get(context.getAgentState().getErrorList().size() - 1)
-            );
+            List<String> errorList = context.getAgentState().getErrorList();
+            context.setErrorMsg(errorList.get(errorList.size() - 1));
+            log.error("[Workflow] taskId={} 步骤失败：{}，错误={}",
+                    context.getTaskId(), step.getDesc(),
+                    context.getErrorMsg());
         }
     }
 
@@ -135,10 +155,6 @@ public class AgentSupervisor {
     private void executeStep(WorkflowContext context) {
         AgentState state = context.getAgentState();
         WorkflowStep step = context.getCurrentStep();
-
-        System.out.println("=====================================");
-        System.out.println("正在执行步骤：" + step.getDesc());
-        System.out.println("=====================================");
 
         if (step == WorkflowStep.PRD_ANALYSIS) {
             prdAgent.execute(state);
